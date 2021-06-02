@@ -25,6 +25,7 @@ var notesInQueue = [];      // the notes that have been put into the web audio,
 var timerWorker = null;     // The Web Worker used to fire timer messages
 let secondsPerBeat = 60.0 / tempo;
 
+    
 const [notes, setNotes] = useState([true,false,true,false,false,false,false,false,false,false,false,false,false,false,false,true]);
 const [test, settest] = useState();
 const notesRef = useRef(notes);
@@ -38,8 +39,8 @@ notesRef.current = notes;
 
 console.log("gloval" + notes)
 const handleClick =  (e) => {
-
-   let notes_copy = []
+    console.log(e)
+    let notes_copy = []
    notes_copy = notes.slice()
 
     notes_copy[e] = !notes_copy[e];
@@ -63,7 +64,7 @@ const handleClick =  (e) => {
 function nextNote() {
     // Advance current note and time by a 16th note...
                                           // tempo value to calculate beat length.
-    nextNoteTime +=  secondsPerBeat;    // Add beat length to last beat time
+    nextNoteTime +=  0.25*secondsPerBeat;    // Add beat length to last beat time
     
     current16thNote++;    // Advance the beat number, wrap to zero
     if (current16thNote == 16) {
@@ -95,12 +96,14 @@ function scheduler() {
         for (let i in notesRef.current){
                         
             if(notesRef.current[i]){
-                console.log(i);
                 
-                scheduleNote( current16thNote, nextNoteTime + i*0.05*secondsPerBeat);
+                scheduleNote(current16thNote, nextNoteTime);
+                nextNote();
+
             }
+            nextNote();
+
         }
-        nextNote();
     }
 }
 
@@ -192,36 +195,42 @@ useEffect(() => {
 
 
    return (
-   <div>
-      <div className="sequencer">
-         <div className="box" onClick={() => handleClick(0)}></div>
-         <div className="box" onClick={() => handleClick(1)}></div>
-         <div className="box" onClick={() => handleClick(2)}></div>
-         <div className="box" onClick={() => handleClick(3)}></div>
-         <div className="box" onClick={() => handleClick(4)}></div>
-         <div className="box" onClick={() => handleClick(5)}></div>
-         <div className="box" onClick={() => handleClick(6)}></div>
-         <div className="box" onClick={() => handleClick(7)}></div>
-         <div className="box" onClick={() => handleClick(8)}></div>
-         <div className="box" onClick={() => handleClick(9)}></div>
-         <div className="box" onClick={() => handleClick(10)}></div>
-         <div className="box" onClick={() => handleClick(11)}></div>
-         <div className="box" onClick={() => handleClick(12)}></div>
-         <div className="box" onClick={() => handleClick(13)}></div>
-         <div className="box" onClick={() => handleClick(14)}></div>
-         <div className="box" onClick={() => handleClick(15)}></div>
+   <div className="app">
+           <div className="sequencer">
+               <div className="seq">
+                   {new Array(16).fill().map((v, i) => (<div className={notes[i] ? "box_fill" : "box_unfill"} key={i} onClick={() => handleClick(i)}></div>))}
+               </div>
+               <div className="seq">
+                   {new Array(16).fill().map((v, i) => (<div className={notes[i] ? "box_fill" : "box_unfill"} key={i} onClick={() => handleClick(i)}></div>))}
+               </div>
+               <div className="seq">
+                   {new Array(16).fill().map((v, i) => (<div className={notes[i] ? "box_fill" : "box_unfill"} key={i} onClick={() => handleClick(i)}></div>))}
+               </div>
       <div>{test}</div>
       </div>
       
-      <style jsx>{`
-         .sequencer {
+           <style jsx>{`
+            .app {
+                background-color:black;
+                height:vh;
+                width:vw;
+            }
+         .seq {
             display: flex;
          }
-         .box {
+         .box_fill {
             width: 20px;
             height: 30px;
             margin: 10px;
             background-color: blue;
+            color: red;
+            }
+
+        .box_unfill{
+            width: 20px;
+            height: 30px;
+            margin: 10px;
+            background-color: red;
             color: red;
             }
       `}</style>
