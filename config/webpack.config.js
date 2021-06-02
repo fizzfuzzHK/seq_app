@@ -11,7 +11,7 @@ const htmlWebpackPlugin = new HtmlWebPackPlugin({
     worker:"./src/client/worker.js"
  },
   output: {
-    path: __dirname,
+    path: path.resolve(__dirname, 'public'),
     filename: '[name].js'
   },
   module: {
@@ -33,6 +33,17 @@ const htmlWebpackPlugin = new HtmlWebPackPlugin({
             },
     
       ]},
+      {
+        test: /\.wav$/,
+        use: [
+          {
+              loader: 'file-loader',
+              options: {
+                
+              }
+          }
+      ]
+      },
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"]
