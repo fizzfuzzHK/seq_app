@@ -1,11 +1,11 @@
 import React from 'react';
 
 const Track = (props)  => {
-    var test = "test3"
-
+  
    return (
         <div>
             <div className="seq">
+                <div className="test">{props.currentNote}</div>
                 {new Array(32).fill().map((v, i) => (
                     <div className={(props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")} 
                         key={i} 
@@ -14,8 +14,8 @@ const Track = (props)  => {
             </div>
 
         <style jsx>{`
-            .test3{
-                background-color: black;
+            .test{
+                font-size:40px
             }
             .seq {
                 display: flex;

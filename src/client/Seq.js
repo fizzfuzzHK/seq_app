@@ -45,6 +45,7 @@ const Seq = () => {
         ]
     );
 
+    const [test, settest] = useState(0);
     const techno =   [
         {
             id:0,
@@ -90,6 +91,7 @@ const Seq = () => {
         notesInQueue.push( { note: beatNumber, time: time } );     
         // create an oscillator
         // playSound(props.buffer, time)
+        settest(current32thNote.current)
         tracks.forEach((tracks,i) => {
             if(tracks["notes"][current32thNote.current]){            
                 var source = audioContext.createBufferSource();
@@ -225,7 +227,7 @@ const Seq = () => {
         <div className="app">
             <div className="title">S<span>e</span>quencer</div>
             <div className="sequencer">
-                {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={current32thNote.current} handleClick={handleClick} />))}
+                {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={test} handleClick={handleClick} />))}
             {/* <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div> */}
             {!isPlaying ? <div className="play" onClick={handlePlay}>Play</div> : <div className="play" onClick={handleStop}>Stop</div>}
             <input type="range" min="-100" max="0" value="0" class="range blue"/>
