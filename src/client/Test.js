@@ -8,7 +8,6 @@ const Test = () => {
 
     function countUp() {
         console.log(currentNumber);
-        
         var tmp = currentNumber + 1
         setcurrentNumber(tmp)  
         }
@@ -19,10 +18,10 @@ const Test = () => {
         timerWorker = new Worker('./worker.js');
 
         timerWorker.onmessage = function(f) {  
-        if (f.data == "tick") {
+            if (f.data == "tick") {
             countUp();
-        }
-    } 
+                }
+        }    
     }, []);
       
     return (

@@ -87,8 +87,7 @@ const Seq = () => {
     var last16thNoteDrawn = -1; // the last "box" we drew on the screen
     var notesInQueue = [];      // the notes that have been put into the web audio,
     var lock = false;
-    var tempo = 120.0;          // tempo (in beats per minute)
-    let secondsPerBeat = 60.0 / tempo;
+    // var tempo = 120.0;          // tempo (in beats per minute)
     var testnote;
     const [tracks, setTracks] = useState(
         [
@@ -132,6 +131,9 @@ const Seq = () => {
 
     const [currentNote, setCurrentNote] = useState(0);
 
+    const [tempo, setTempo] = useState(120);
+    let secondsPerBeat = 60.0 /tempo;
+
     const [test, settest] = useState();
     function handlePlay (e){
         e.preventDefault();
@@ -146,6 +148,8 @@ const Seq = () => {
     function nextNote() {
         // Advance current note and time by a 16th note...
                                           // tempo value to calculate beat length.
+                                          console.log("tempo is " + secondsPerBeat.current);
+
         nextNoteTime.current +=  0.25*secondsPerBeat;    // Add beat length to last beat time  
         console.log(currentNote + 1);
         var test = currentNote + 1
@@ -204,7 +208,11 @@ console.log('rendered');
         timerWorker.current.postMessage("stop");    
     }
 
-    
+    const handlerChangeBPM = (e) => {
+        setTempo(e.target.value);
+        
+    }
+
 
     const handleClick =  (id,number) => {
         let notes_copy = []
@@ -224,6 +232,8 @@ console.log('rendered');
       timerWorker.current.onmessage = function(f) {  
         if (f.data == "tick") {
             scheduler();
+            console.log("tempo is " + tempo);
+            
         }
         else
             console.log("message: " + f.data);
@@ -243,26 +253,64 @@ console.log('rendered');
                 {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={currentNote} handleClick={handleClick} />))}
             {/* <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div> */}
             {!isPlaying ? <div className="play" onClick={handlePlay}>Play</div> : <div className="play" onClick={handleStop}>Stop</div>}
-            <input type="range" min="-100" max="0" value="0" class="range blue"/>
+            <input type="range" min="0" max="180" value={tempo} class="range blue" onChange={handlerChangeBPM}/>
             <div className="test.ss">what</div>
             </div>
         </div>
 
         <style jsx>{`
-            .test{
-                font-size:60px
+          
+            
+            .app {
+                background-color:rgb(37, 37, 37);
+                min-height: 100vh;
+                width:vw;
+                display: flex;
+                flex-flow: column;
             }
-            .test.ss {
-                color:red
+            .title {
+                font-size: 60px;
+                color: white;
+                text-align: center;
+                letter-spacing:15px;
+                {/* background-color: aqua; */}
+                width:vw;
+                height:30px;
+                left: 0;
+                right: 0;
+                margin-top:100px;
+                margin-bottom:180px
+            }
+            .title span {
+                color:rgba(255, 0, 0, 0.836);
+            }
+            .seq {
+                display: flex;
+                justify-content: center; /
+                width:vw;
+            }        
+            .play {
+                font-size: 40px;
+                color: white;
+                text-align: center;
+                letter-spacing:15px;
+                {/* background-color: aqua; */}
+                width:vw;
+                height:30px;
+                left: 0;
+                right: 0;
+                margin-top:100px;
+                margin-bottom:150px
+                
             }
             .range {
             -webkit-appearance: none;
             -moz-appearance: none;
-            position: absolute;
+            position: relative;
             left: 50%;
             top: 50%;
             width: 200px;
-            margin-top: 10px;
+            margin-top: 0px;
             transform: translate(-50%, -50%);
             }
 
@@ -367,47 +415,6 @@ console.log('rendered');
 
             input[type=range]::-moz-range-thumb:active {
             cursor: -moz-grabbing;
-            }
-            .app {
-                background-color:rgb(37, 37, 37);
-                min-height: 100vh;
-                width:vw;
-                display: flex;
-                flex-flow: column;
-            }
-            .title {
-                font-size: 60px;
-                color: white;
-                text-align: center;
-                letter-spacing:15px;
-                {/* background-color: aqua; */}
-                width:vw;
-                height:30px;
-                left: 0;
-                right: 0;
-                margin-top:100px;
-                margin-bottom:180px
-            }
-            .title span {
-                color:rgba(255, 0, 0, 0.836);
-            }
-            .seq {
-                display: flex;
-                justify-content: center; /
-                width:vw;
-            }        
-            .play {
-                font-size: 40px;
-                color: white;
-                text-align: center;
-                letter-spacing:15px;
-                {/* background-color: aqua; */}
-                width:vw;
-                height:30px;
-                left: 0;
-                right: 0;
-                margin-top:100px;
-                margin-bottom:150px
             }
         `}</style>
    </div>
