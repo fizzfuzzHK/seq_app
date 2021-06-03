@@ -8,8 +8,74 @@ import hihatFile from '../sounds/hihat.wav'
 var audioContext;
 audioContext = new AudioContext();
 
-var timerWorker; 
-timerWorker = new Worker('./worker.js');
+
+var bufferSound;
+
+function finishedLoading(bufferList) {
+    bufferSound = bufferList
+    console.log('finished buffer load');      
+}
+
+function BufferLoader(context, urlList, callback) {
+    this.context = context;
+    this.urlList = urlList;
+    this.onload = callback;
+    this.bufferList = new Array();
+    this.loadCount = 0;
+}
+
+BufferLoader.prototype.loadBuffer = function(url, index) {
+// Load buffer asynchronously
+var request = new XMLHttpRequest();
+request.open("GET", url, true);
+request.responseType = "arraybuffer";
+
+var loader = this;
+
+request.onload = function() {
+  // Asynchronously decode the audio file data in request.response
+  loader.context.decodeAudioData(
+    request.response,
+    function(buffer) {
+      if (!buffer) {
+        alert('error decoding file data: ' + url);
+        return;
+      }
+      loader.bufferList[index] = buffer;
+      if (++loader.loadCount == loader.urlList.length)
+        loader.onload(loader.bufferList);
+    },
+    function(error) {
+      console.error('decodeAudioData error', error);
+    }
+  );
+}
+
+request.onerror = function() {
+  alert('BufferLoader: XHR error');
+}
+
+request.send();
+}
+
+BufferLoader.prototype.load = function() {
+    for (var i = 0; i < this.urlList.length; ++i)
+    this.loadBuffer(this.urlList[i], i);
+    console.log('loaded buffer');
+    
+}
+
+const bufferLoader = new BufferLoader(
+    audioContext,
+    [
+    kickFile,
+    snareFile,
+    hihatFile,
+    ],
+    finishedLoading
+    );
+
+bufferLoader.load();
 
 const Seq = () => {
     // var audioContext;
@@ -21,10 +87,9 @@ const Seq = () => {
     var last16thNoteDrawn = -1; // the last "box" we drew on the screen
     var notesInQueue = [];      // the notes that have been put into the web audio,
     var lock = false;
-    var bufferSound;
     var tempo = 120.0;          // tempo (in beats per minute)
     let secondsPerBeat = 60.0 / tempo;
-
+    var testnote;
     const [tracks, setTracks] = useState(
         [
             {
@@ -66,6 +131,8 @@ const Seq = () => {
     const [isPlaying, setIsPlaying] = useState(false);
 
     const [currentNote, setCurrentNote] = useState(0);
+
+    const [test, settest] = useState();
     function handlePlay (e){
         e.preventDefault();
         play()
@@ -79,14 +146,17 @@ const Seq = () => {
     function nextNote() {
         // Advance current note and time by a 16th note...
                                           // tempo value to calculate beat length.
-        nextNoteTime.current +=  0.25*secondsPerBeat;    // Add beat length to last beat time      
-        let current = currentNote;
-        current++
-        setCurrentNote(current)    // Advance the beat number, wrap to zero
-        if (currentNote == 32) {
+        nextNoteTime.current +=  0.25*secondsPerBeat;    // Add beat length to last beat time  
+        console.log(currentNote + 1);
+        var test = currentNote + 1
+        setCurrentNote(test)  
+        console.log(currentNote);
+          // Advance the beat number, wrap to zero
+        if (currentNote == 31) {
             setCurrentNote(0)
         }
     }
+console.log('rendered');
 
     function scheduleNote( beatNumber, time ) {
         // push the note on the queue, even if we're not playing.
@@ -94,7 +164,7 @@ const Seq = () => {
         // create an oscillator
         // playSound(props.buffer, time)
         tracks.forEach((tracks,i) => {
-            if(tracks["notes"][currentNote]){            
+            if(tracks["notes"][beatNumber]){            
                 var source = audioContext.createBufferSource();
                 source.buffer = bufferSound[i];
                 source.connect(audioContext.destination);
@@ -125,68 +195,16 @@ const Seq = () => {
         setIsPlaying(true);
         setCurrentNote(0)     
         nextNoteTime.current = audioContext.currentTime + 0.03;
-        timerWorker.postMessage("start");    
+        timerWorker.current.postMessage("start");    
     }
 
     function stop() {
         console.log('stop');
         setIsPlaying(false);
-        timerWorker.postMessage("stop");    
+        timerWorker.current.postMessage("stop");    
     }
 
-    function finishedLoading(bufferList) {
-        bufferSound = bufferList
-        console.log('finished buffer load');      
-    }
-
-    function BufferLoader(context, urlList, callback) {
-        this.context = context;
-        this.urlList = urlList;
-        this.onload = callback;
-        this.bufferList = new Array();
-        this.loadCount = 0;
-    }
     
-    BufferLoader.prototype.loadBuffer = function(url, index) {
-    // Load buffer asynchronously
-    var request = new XMLHttpRequest();
-    request.open("GET", url, true);
-    request.responseType = "arraybuffer";
-  
-    var loader = this;
-  
-    request.onload = function() {
-      // Asynchronously decode the audio file data in request.response
-      loader.context.decodeAudioData(
-        request.response,
-        function(buffer) {
-          if (!buffer) {
-            alert('error decoding file data: ' + url);
-            return;
-          }
-          loader.bufferList[index] = buffer;
-          if (++loader.loadCount == loader.urlList.length)
-            loader.onload(loader.bufferList);
-        },
-        function(error) {
-          console.error('decodeAudioData error', error);
-        }
-      );
-    }
-  
-    request.onerror = function() {
-      alert('BufferLoader: XHR error');
-    }
-  
-    request.send();
-    }
-  
-    BufferLoader.prototype.load = function() {
-        for (var i = 0; i < this.urlList.length; ++i)
-        this.loadBuffer(this.urlList[i], i);
-        console.log('loaded buffer');
-        
-    }
 
     const handleClick =  (id,number) => {
         let notes_copy = []
@@ -199,29 +217,23 @@ const Seq = () => {
         setTracks(techno)
     }
      
+    const timerWorker = useRef(new Worker('./worker.js'));
+
     useEffect(() => {
-        bufferLoader = new BufferLoader(
-            audioContext,
-            [
-            kickFile,
-            snareFile,
-            hihatFile,
-            ],
-            finishedLoading
-            );
-        
-        bufferLoader.load();
-        
-        timerWorker.onmessage = function(f) {  
-            if (f.data == "tick") {
-                scheduler();
-            }
-            else
-                console.log("message: " + f.data);
-        };
-        timerWorker.postMessage({"interval":lookahead});
-        console.log('test');
-    }, []);
+     
+      timerWorker.current.onmessage = function(f) {  
+        if (f.data == "tick") {
+            scheduler();
+        }
+        else
+            console.log("message: " + f.data);
+    };
+    timerWorker.current.postMessage({"interval":lookahead});
+    console.log('test');
+      
+    }, [currentNote]);
+      
+  
 
     return (
     <div>

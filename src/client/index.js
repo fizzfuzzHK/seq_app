@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Seq from "./Seq.js"
+import Test from "./Test.js"
 
 const Index = () => {
   return (
