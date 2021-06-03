@@ -1,8 +1,6 @@
 import React from 'react';
 import {useState,useEffect, useRef} from 'react'
 import Track from './Track.js'
-import Snare from './Snare.js'
-import Hihat from './Hihat.js'
 import kickFile from '../sounds/kick.wav'
 import snareFile from '../sounds/snare.wav'
 import hihatFile from '../sounds/hihat.wav'
@@ -71,6 +69,7 @@ const Seq = () => {
         e.preventDefault();
         play()
     }
+
     function handleStop (e){
         e.preventDefault();
         stop()
@@ -92,10 +91,7 @@ const Seq = () => {
         // create an oscillator
         // playSound(props.buffer, time)
         tracks.forEach((tracks,i) => {
-            console.log(tracks["notes"]);
-
-            if(tracks["notes"][current32thNote.current]){
-                
+            if(tracks["notes"][current32thNote.current]){            
                 var source = audioContext.createBufferSource();
                 source.buffer = bufferSound[i];
                 source.connect(audioContext.destination);
@@ -108,10 +104,8 @@ const Seq = () => {
         // while there are notes that will need to play before the next interval, 
         // schedule them and advance the pointer.
         while (nextNoteTime.current < audioContext.currentTime + scheduleAheadTime ) {  
-            console.log('nextNoteTime.current is '  + nextNoteTime.current);
-               
-                scheduleNote(current32thNote.current, nextNoteTime.current);
-                nextNote();             
+            scheduleNote(current32thNote.current, nextNoteTime.current);
+            nextNote();             
         }
     }
 
@@ -125,23 +119,21 @@ const Seq = () => {
             console.log('started');
             lock = true;
         }
-            setIsPlaying(true);
-            current32thNote.current = 0;
-            console.log('audio context time ' + audioContext.currentTime);
-            
-            nextNoteTime.current = audioContext.currentTime + 0.03;
-            timerWorker.postMessage("start");    
+        setIsPlaying(true);
+        current32thNote.current = 0;        
+        nextNoteTime.current = audioContext.currentTime + 0.03;
+        timerWorker.postMessage("start");    
     }
 
     function stop() {
         console.log('stop');
         setIsPlaying(false);
-
         timerWorker.postMessage("stop");    
     }
+
     function finishedLoading(bufferList) {
         bufferSound = bufferList
-        console.log('finished');      
+        console.log('finished buffer load');      
     }
 
     function BufferLoader(context, urlList, callback) {
@@ -184,15 +176,26 @@ const Seq = () => {
     }
   
     request.send();
-  }
+    }
   
-  BufferLoader.prototype.load = function() {
-    for (var i = 0; i < this.urlList.length; ++i)
-    this.loadBuffer(this.urlList[i], i);
-    console.log('loaded buffer');
-    
-  }
-  
+    BufferLoader.prototype.load = function() {
+        for (var i = 0; i < this.urlList.length; ++i)
+        this.loadBuffer(this.urlList[i], i);
+        console.log('loaded buffer');
+        
+    }
+
+    const handleClick =  (id,number) => {
+        let notes_copy = []
+        notes_copy = tracks.slice()
+        notes_copy[id]["notes"][number] = !notes_copy[id]["notes"][number]
+        setTracks(notes_copy)
+    }
+
+    const handleChangeTemplate = (template) => {        
+        setTracks(techno)
+    }
+     
     useEffect(() => {
         bufferLoader = new BufferLoader(
             audioContext,
@@ -206,8 +209,7 @@ const Seq = () => {
         
         bufferLoader.load();
         
-        timerWorker.onmessage = function(f) {
-            
+        timerWorker.onmessage = function(f) {  
             if (f.data == "tick") {
                 scheduler();
             }
@@ -218,20 +220,7 @@ const Seq = () => {
         console.log('test');
     }, []);
 
-    const handleClick =  (id,number) => {
-        let notes_copy = []
-        notes_copy = tracks.slice()
-        notes_copy[id]["notes"][number] = !notes_copy[id]["notes"][number]
-        setTracks(notes_copy)
-    }
-
-    const handleChangeTemplate = (template) => {
-        console.log(techno);
-        
-        setTracks(techno)
-    }
-
-   return (
+    return (
     <div>
         <div className="app">
             <div className="title">S<span>e</span>quencer</div>
@@ -239,11 +228,131 @@ const Seq = () => {
                 {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={current32thNote.current} handleClick={handleClick} />))}
             {/* <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div> */}
             {!isPlaying ? <div className="play" onClick={handlePlay}>Play</div> : <div className="play" onClick={handleStop}>Stop</div>}
-            
+            <input type="range" min="-100" max="0" value="0" class="range blue"/>
+            <div className="test.ss">what</div>
             </div>
         </div>
 
         <style jsx>{`
+            .test{
+                font-size:60px
+            }
+            .test.ss {
+                color:red
+            }
+            .range {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 200px;
+            margin-top: 10px;
+            transform: translate(-50%, -50%);
+            }
+
+            input[type=range]::-webkit-slider-runnable-track {
+            -webkit-appearance: none;
+            background: rgba(59,173,227,1);
+            background: -moz-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: -webkit-gradient(left bottom, right top, color-stop(0%, rgba(59,173,227,1)), color-stop(25%, rgba(87,111,230,1)), color-stop(51%, rgba(152,68,183,1)), color-stop(100%, rgba(255,53,127,1)));
+            background: -webkit-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: -o-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: -ms-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3bade3 ', endColorstr='#ff357f ', GradientType=1 );
+            height: 2px;
+            }
+
+            input[type=range]:focus {
+            outline: none;
+            }
+
+            input[type=range]::-moz-range-track {
+            -moz-appearance: none;
+            background: rgba(59,173,227,1);
+            background: -moz-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: -webkit-gradient(left bottom, right top, color-stop(0%, rgba(59,173,227,1)), color-stop(25%, rgba(87,111,230,1)), color-stop(51%, rgba(152,68,183,1)), color-stop(100%, rgba(255,53,127,1)));
+            background: -webkit-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: -o-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: -ms-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            background: linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3bade3 ', endColorstr='#ff357f ', GradientType=1 );
+            height: 2px;
+            }
+
+            input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            border: 2px solid;
+            border-radius: 50%;
+            height: 25px;
+            width: 25px;
+            max-width: 80px;
+            position: relative;
+            bottom: 11px;
+            background-color: #1d1c25;
+            cursor: -webkit-grab;
+
+            -webkit-transition: border 1000ms ease;
+            transition: border 1000ms ease;
+            }
+
+            input[type=range]::-moz-range-thumb {
+            -moz-appearance: none;
+            border: 2px solid;
+            border-radius: 50%;
+            height: 25px;
+            width: 25px;
+            max-width: 80px;
+            position: relative;
+            bottom: 11px;
+            background-color: #1d1c25;
+            cursor: -moz-grab;
+            -moz-transition: border 1000ms ease;
+            transition: border 1000ms ease;
+            }
+
+
+
+            .range.blue::-webkit-slider-thumb {
+            border-color: rgb(59,173,227);
+            }
+
+            .range.ltpurple::-webkit-slider-thumb {
+            border-color: rgb(87,111,230);
+            }
+
+            .range.purple::-webkit-slider-thumb {
+            border-color: rgb(152,68,183);
+            }
+
+            .range.pink::-webkit-slider-thumb {
+            border-color: rgb(255,53,127);
+            }
+
+            .range.blue::-moz-range-thumb {
+            border-color: rgb(59,173,227);
+            }
+
+            .range.ltpurple::-moz-range-thumb {
+            border-color: rgb(87,111,230);
+            }
+
+            .range.purple::-moz-range-thumb {
+            border-color: rgb(152,68,183);
+            }
+
+            .range.pink::-moz-range-thumb {
+            border-color: rgb(255,53,127);
+            }
+
+            input[type=range]::-webkit-slider-thumb:active {
+            cursor: -webkit-grabbing;
+            }
+
+            input[type=range]::-moz-range-thumb:active {
+            cursor: -moz-grabbing;
+            }
             .app {
                 background-color:rgb(37, 37, 37);
                 min-height: 100vh;
@@ -269,11 +378,9 @@ const Seq = () => {
             }
             .seq {
                 display: flex;
-                justify-content: center; /* 子要素をflexboxにより中央に配置する */
+                justify-content: center; /
                 width:vw;
-
-            }
-           
+            }        
             .play {
                 font-size: 40px;
                 color: white;
@@ -293,3 +400,5 @@ const Seq = () => {
 };
 
 export default Seq;
+
+

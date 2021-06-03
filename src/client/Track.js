@@ -1,20 +1,25 @@
 import React from 'react';
 
-const Track = React.forwardRef((props)  => {
+const Track = (props)  => {
+    var test = "test3"
+
    return (
         <div>
             <div className="seq">
                 {new Array(32).fill().map((v, i) => (
-                    <div className={props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill"} 
+                    <div className={(props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")} 
                         key={i} 
                         onClick={() => props.handleClick(props.id, i)}>
                     </div>))}
             </div>
 
         <style jsx>{`
+            .test3{
+                background-color: black;
+            }
             .seq {
                 display: flex;
-                justify-content: center; /* 子要素をflexboxにより中央に配置する */
+                justify-content: center;  
                 width:vw;
             }
             .box_fill {
@@ -50,6 +55,6 @@ const Track = React.forwardRef((props)  => {
         `}</style>
    </div>
    )
-});
+};
 
 export default Track;
