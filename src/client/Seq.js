@@ -16,9 +16,9 @@ timerWorker = new Worker('./worker.js');
 const Seq = () => {
     // var audioContext;
     var bufferLoader;
-    var current32thNote;        // What note is currently last scheduled?
+    var current32thNote = useRef(null);        // What note is currently last scheduled?
     var lookahead = 25.0;       // How frequently to call scheduling function 
-    var nextNoteTime = 0.0;     // when the next note is due.
+    var nextNoteTime = useRef(0.0);     // when the next note is due.
     var scheduleAheadTime = 0.1;    // How far ahead to schedule audio (sec)
     var last16thNoteDrawn = -1; // the last "box" we drew on the screen
     var notesInQueue = [];      // the notes that have been put into the web audio,
@@ -32,17 +32,17 @@ const Seq = () => {
             {
                 id:0,
                 name :"kick", 
-                notes: [false,false,false,false,true,false,false,false,false,false,false,false,false,false,false,true,true,false,true,false,false,false,false,false,false,false,false,false,false,false,false,true]
+                notes:[true, 0, true, 0, 0, 0, true, false, true, 0, true, 0, 0, true, 0, true, true, 0, true, 0, 0, 0, true, 0, true, 0, true, 0, 0, true, true, true]
             },
             {
                 id:1,
                 name: "snare",
-                notes:[true,false,true,false,false,false,false,false,false,false,false,false,false,false,false,true,true,false,true,false,false,false,false,false,false,false,false,false,false,false,false,true]
+                notes:[0, 0, 0, 0, true, 0, 0, 0, 0, 0, 0, 0, true, 0, 0, 0, 0, 0, 0, 0, true, 0, 0, 0, 0, 0, 0, 0, true, 0, 0, 0]
             },
             {   
                 id:2,
                 name: "hihat",
-                notes:[true,false,true,false,false,false,false,false,false,false,false,false,false,false,false,true,true,false,true,false,false,false,false,false,false,false,false,false,false,false,false,true]
+                notes:[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1]
             },
         ]
     );
@@ -65,6 +65,8 @@ const Seq = () => {
         },
     ]
 
+    const [isPlaying, setIsPlaying] = useState(false);
+
     function handlePlay (e){
         e.preventDefault();
         play()
@@ -77,10 +79,10 @@ const Seq = () => {
     function nextNote() {
         // Advance current note and time by a 16th note...
                                           // tempo value to calculate beat length.
-        nextNoteTime +=  0.25*secondsPerBeat;    // Add beat length to last beat time      
-        current32thNote++;    // Advance the beat number, wrap to zero
-        if (current32thNote == 32) {
-            current32thNote = 0;
+        nextNoteTime.current +=  0.25*secondsPerBeat;    // Add beat length to last beat time      
+        current32thNote.current++;    // Advance the beat number, wrap to zero
+        if (current32thNote.current == 32) {
+            current32thNote.current = 0;
         }
     }
 
@@ -90,7 +92,10 @@ const Seq = () => {
         // create an oscillator
         // playSound(props.buffer, time)
         tracks.forEach((tracks,i) => {
-            if(tracks["notes"][current32thNote]){
+            console.log(tracks["notes"]);
+
+            if(tracks["notes"][current32thNote.current]){
+                
                 var source = audioContext.createBufferSource();
                 source.buffer = bufferSound[i];
                 source.connect(audioContext.destination);
@@ -102,8 +107,10 @@ const Seq = () => {
     function scheduler() {
         // while there are notes that will need to play before the next interval, 
         // schedule them and advance the pointer.
-        while (nextNoteTime < audioContext.currentTime + scheduleAheadTime ) {     
-                scheduleNote(current32thNote, nextNoteTime);
+        while (nextNoteTime.current < audioContext.currentTime + scheduleAheadTime ) {  
+            console.log('nextNoteTime.current is '  + nextNoteTime.current);
+               
+                scheduleNote(current32thNote.current, nextNoteTime.current);
                 nextNote();             
         }
     }
@@ -118,14 +125,19 @@ const Seq = () => {
             console.log('started');
             lock = true;
         }
-            current32thNote = 0;
-            nextNoteTime = audioContext.currentTime;
+            setIsPlaying(true);
+            current32thNote.current = 0;
+            console.log('audio context time ' + audioContext.currentTime);
+            
+            nextNoteTime.current = audioContext.currentTime + 0.03;
             timerWorker.postMessage("start");    
     }
 
     function stop() {
-        timerWorker.postMessage("stop");    
+        console.log('stop');
+        setIsPlaying(false);
 
+        timerWorker.postMessage("stop");    
     }
     function finishedLoading(bufferList) {
         bufferSound = bufferList
@@ -186,8 +198,8 @@ const Seq = () => {
             audioContext,
             [
             kickFile,
-            hihatFile,
             snareFile,
+            hihatFile,
             ],
             finishedLoading
             );
@@ -224,10 +236,10 @@ const Seq = () => {
         <div className="app">
             <div className="title">S<span>e</span>quencer</div>
             <div className="sequencer">
-                {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} handleClick={handleClick} />))}
-            <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div>
-            <div className="play" onClick={handlePlay}>Play</div>
-            <div className="play" onClick={handleStop}>Stop</div>
+                {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={current32thNote.current} handleClick={handleClick} />))}
+            {/* <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div> */}
+            {!isPlaying ? <div className="play" onClick={handlePlay}>Play</div> : <div className="play" onClick={handleStop}>Stop</div>}
+            
             </div>
         </div>
 
@@ -250,7 +262,7 @@ const Seq = () => {
                 left: 0;
                 right: 0;
                 margin-top:100px;
-                margin-bottom:150px
+                margin-bottom:180px
             }
             .title span {
                 color:rgba(255, 0, 0, 0.836);
@@ -263,7 +275,7 @@ const Seq = () => {
             }
            
             .play {
-                font-size: 60px;
+                font-size: 40px;
                 color: white;
                 text-align: center;
                 letter-spacing:15px;

@@ -14,6 +14,7 @@ const htmlWebpackPlugin = new HtmlWebPackPlugin({
     path: path.resolve(__dirname, 'public'),
     filename: '[name].js'
   },
+  devtool: 'inline-source-map',
   module: {
     rules: [
       {
