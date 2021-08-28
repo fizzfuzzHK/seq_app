@@ -1,58 +1,34 @@
 import React from 'react';
+import './Track.scss'
 
 const Track = (props)  => {
     var test = "test3"
+    console.log("currentz" + props.currentNote -1);
+  
 
    return (
         <div>
             <div className="seq">
                 {new Array(32).fill().map((v, i) => (
-                    <div className={(props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")} 
+                    <div className={
+                        props.currentNote > 0 
+                        ? (
+                            props.currentNote-1 === i
+                                ? (props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")+ " test" 
+                                : (props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")
+                            )
+                        : (
+                            i === 31 
+                                ? (props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")+ " test" 
+                                : (props.notes[i] ? "box_fill" : i % 4 === 0 ? "box_quarter_note" : "box_unfill")
+                            )                  
+                    } 
                         key={i} 
                         onClick={() => props.handleClick(props.id, i)}>
+                            {/* <div id="id" className="test">a</div> */}
                     </div>))}
             </div>
 
-        <style jsx>{`
-            .test3{
-                background-color: black;
-            }
-            .seq {
-                display: flex;
-                justify-content: center;  
-                width:vw;
-            }
-            .box_fill {
-                width: 30px;
-                height: 30px;
-                background-color: rgba(25, 255, 217, 0.74);
-                border-color: rgb(37, 37, 37);
-                border-width: 2px;
-                border-style: solid;
-                border-radius: 15%;	
-            }
-            .box_quarter_note {
-                width: 30px;
-                height: 30px;
-                background-color: rgb(124, 124, 124);
-                border-color: rgb(37, 37, 37);
-                border-width: 2px;
-                border-style: solid;
-                border-radius: 15%;	               
-            }
-            .box_unfill{
-                width: 30px;
-                height: 30px;
-                background-color: rgb(85, 85, 85);
-                border-color: rgb(37, 37, 37);
-                border-width: 2px;
-                border-style: solid;
-                border-radius: 15%;	               
-            }
-            .box_unfill:hover {
-                color:grey;
-            }
-        `}</style>
    </div>
    )
 };

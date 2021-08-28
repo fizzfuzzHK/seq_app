@@ -1,0 +1,46 @@
+
+    .test3{
+        background-color: black;
+    }
+    .seq {
+        display: flex;
+        justify-content: center;  
+        width:vw;
+
+    }
+
+    .box_fill {
+        width: 100%;
+        height: 30px;
+        background-color: rgba(25, 255, 217, 0.74);
+        border-color: rgb(37, 37, 37);
+        border-width: 2px;
+        border-style: solid;
+        border-radius: 15%;	
+    }
+    .box_quarter_note {
+        width: 100%;
+        height: 30px;
+        background-color: rgb(124, 124, 124);
+        border-color: rgb(37, 37, 37);
+        border-width: 2px;
+        border-style: solid;
+        border-radius: 15%;	               
+    }
+    .box_unfill{
+        width: 100%;
+        height: 30px;
+        background-color: rgb(85, 85, 85);
+        border-color: rgb(37, 37, 37);
+        border-width: 2px;
+        border-style: solid;
+        border-radius: 15%;	               
+    }
+
+    .box_unfill:hover {
+        color:grey;
+    }
+
+    .test {
+        background-color: red !important; 
+    }

@@ -4,12 +4,14 @@ import Track from './Track.js'
 import kickFile from '../sounds/kick.wav'
 import snareFile from '../sounds/snare.wav'
 import hihatFile from '../sounds/hihat.wav'
+import './Seq.scss'
+import ContinuousSlider from './Slider.js'
 
-var audioContext;
+let audioContext;
 audioContext = new AudioContext();
 
-
-var bufferSound;
+let bufferSound;
+const gainNode = audioContext.createGain()
 
 function finishedLoading(bufferList) {
     bufferSound = bufferList
@@ -26,11 +28,11 @@ function BufferLoader(context, urlList, callback) {
 
 BufferLoader.prototype.loadBuffer = function(url, index) {
 // Load buffer asynchronously
-var request = new XMLHttpRequest();
+const request = new XMLHttpRequest();
 request.open("GET", url, true);
 request.responseType = "arraybuffer";
 
-var loader = this;
+const loader = this;
 
 request.onload = function() {
   // Asynchronously decode the audio file data in request.response
@@ -79,16 +81,17 @@ bufferLoader.load();
 
 const Seq = () => {
     // var audioContext;
-    var bufferLoader;
+    // var bufferLoader;
     // var current32thNote = useRef(null);        // What note is currently last scheduled?
-    var lookahead = 25.0;       // How frequently to call scheduling function 
-    var nextNoteTime = useRef(0.0);     // when the next note is due.
-    var scheduleAheadTime = 0.1;    // How far ahead to schedule audio (sec)
-    var last16thNoteDrawn = -1; // the last "box" we drew on the screen
-    var notesInQueue = [];      // the notes that have been put into the web audio,
-    var lock = false;
+    const lookahead = 25.0;       // How frequently to call scheduling function 
+    const nextNoteTime = useRef(0.0);     // when the next note is due.
+    const scheduleAheadTime = 0.1;    // How far ahead to schedule audio (sec)
+    const last16thNoteDrawn = -1; // the last "box" we drew on the screen
+    const notesInQueue = [];      // the notes that have been put into the web audio,
+    let lock = false;
     // var tempo = 120.0;          // tempo (in beats per minute)
-    var testnote;
+    
+  
     const [tracks, setTracks] = useState(
         [
             {
@@ -128,13 +131,22 @@ const Seq = () => {
     ]
 
     const [isPlaying, setIsPlaying] = useState(false);
-
     const [currentNote, setCurrentNote] = useState(0);
-
     const [tempo, setTempo] = useState(120);
+    const [gain, setGain] = useState(30);
+
+    console.log("gain " + gain);
+    console.log("tempo " + tempo);
+
+    gainNode.gain.value = gain / 100 // 10 %
+    gainNode.connect(audioContext.destination)
+    
+    console.log('test');
+    
     let secondsPerBeat = 60.0 /tempo;
 
     const [test, settest] = useState();
+
     function handlePlay (e){
         e.preventDefault();
         play()
@@ -160,7 +172,6 @@ const Seq = () => {
             setCurrentNote(0)
         }
     }
-console.log('rendered');
 
     function scheduleNote( beatNumber, time ) {
         // push the note on the queue, even if we're not playing.
@@ -171,7 +182,7 @@ console.log('rendered');
             if(tracks["notes"][beatNumber]){            
                 var source = audioContext.createBufferSource();
                 source.buffer = bufferSound[i];
-                source.connect(audioContext.destination);
+                source.connect(gainNode);
                 source.start(time);
             }
         })     
@@ -210,9 +221,11 @@ console.log('rendered');
 
     const handlerChangeBPM = (e) => {
         setTempo(e.target.value);
-        
     }
 
+    const handlerChangeGain = (newValue) => {
+        setGain(newValue);        
+    }
 
     const handleClick =  (id,number) => {
         let notes_copy = []
@@ -232,191 +245,44 @@ console.log('rendered');
       timerWorker.current.onmessage = function(f) {  
         if (f.data == "tick") {
             scheduler();
-            console.log("tempo is " + tempo);
             
         }
         else
             console.log("message: " + f.data);
     };
     timerWorker.current.postMessage({"interval":lookahead});
-    console.log('test');
+   
       
     }, [currentNote]);
       
   
 
     return (
-    <div>
-        <div className="app">
-            <div className="title">S<span>e</span>quencer</div>
-            <div className="sequencer">
-                {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={currentNote} handleClick={handleClick} />))}
-            {/* <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div> */}
-            {!isPlaying ? <div className="play" onClick={handlePlay}>Play</div> : <div className="play" onClick={handleStop}>Stop</div>}
-            <input type="range" min="0" max="180" value={tempo} class="range blue" onChange={handlerChangeBPM}/>
-            <div className="test.ss">what</div>
+        <div>
+            <div className="app">
+                <div className="title">S<span>e</span>quencer</div>
+                <div className="sequencer">
+                    {tracks.map(tracks=> (<Track key={tracks.id} id={tracks.id} name={tracks.name} notes={tracks.notes} currentNote={currentNote} handleClick={handleClick} />))}
+                {/* <div className="play" onClick={() => handleChangeTemplate("techno")}>Techno</div> */}
+                <div class="range-slider">
+                            {/* <span id="rs-bullet" className="rs-label">0</span> */}
+                            {/* <input id="rs-range-line" value={gain*100} onChange={handlerChangeGain} className="rs-range" type="range"  min="0" max="100"/> */}
+                </div>
+                <div className="volumeSlider">
+                    <ContinuousSlider value={gain} onChange={handlerChangeGain}/>
+                </div>
+                {!isPlaying ? <div className="play" onClick={handlePlay}>Play</div> : <div className="play" onClick={handleStop}>Stop</div>}
+                
+                {/* <div className="container"> 
+                    <div class="range-slider">
+                        <input id="rs-range-line" value={tempo} onChange={handlerChangeBPM} className="rs-range" type="range"  min="0" max="180"/>
+                    </div>
+                    <div className="box-minmax">
+                        <span>0</span><span>180</span>
+                    </div>
+                </div> */}
             </div>
         </div>
-
-        <style jsx>{`
-          
-            
-            .app {
-                background-color:rgb(37, 37, 37);
-                min-height: 100vh;
-                width:vw;
-                display: flex;
-                flex-flow: column;
-            }
-            .title {
-                font-size: 60px;
-                color: white;
-                text-align: center;
-                letter-spacing:15px;
-                {/* background-color: aqua; */}
-                width:vw;
-                height:30px;
-                left: 0;
-                right: 0;
-                margin-top:100px;
-                margin-bottom:180px
-            }
-            .title span {
-                color:rgba(255, 0, 0, 0.836);
-            }
-            .seq {
-                display: flex;
-                justify-content: center; /
-                width:vw;
-            }        
-            .play {
-                font-size: 40px;
-                color: white;
-                text-align: center;
-                letter-spacing:15px;
-                {/* background-color: aqua; */}
-                width:vw;
-                height:30px;
-                left: 0;
-                right: 0;
-                margin-top:100px;
-                margin-bottom:150px
-                
-            }
-            .range {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            position: relative;
-            left: 50%;
-            top: 50%;
-            width: 200px;
-            margin-top: 0px;
-            transform: translate(-50%, -50%);
-            }
-
-            input[type=range]::-webkit-slider-runnable-track {
-            -webkit-appearance: none;
-            background: rgba(59,173,227,1);
-            background: -moz-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: -webkit-gradient(left bottom, right top, color-stop(0%, rgba(59,173,227,1)), color-stop(25%, rgba(87,111,230,1)), color-stop(51%, rgba(152,68,183,1)), color-stop(100%, rgba(255,53,127,1)));
-            background: -webkit-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: -o-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: -ms-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3bade3 ', endColorstr='#ff357f ', GradientType=1 );
-            height: 2px;
-            }
-
-            input[type=range]:focus {
-            outline: none;
-            }
-
-            input[type=range]::-moz-range-track {
-            -moz-appearance: none;
-            background: rgba(59,173,227,1);
-            background: -moz-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: -webkit-gradient(left bottom, right top, color-stop(0%, rgba(59,173,227,1)), color-stop(25%, rgba(87,111,230,1)), color-stop(51%, rgba(152,68,183,1)), color-stop(100%, rgba(255,53,127,1)));
-            background: -webkit-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: -o-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: -ms-linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            background: linear-gradient(45deg, rgba(59,173,227,1) 0%, rgba(87,111,230,1) 25%, rgba(152,68,183,1) 51%, rgba(255,53,127,1) 100%);
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3bade3 ', endColorstr='#ff357f ', GradientType=1 );
-            height: 2px;
-            }
-
-            input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            border: 2px solid;
-            border-radius: 50%;
-            height: 25px;
-            width: 25px;
-            max-width: 80px;
-            position: relative;
-            bottom: 11px;
-            background-color: #1d1c25;
-            cursor: -webkit-grab;
-
-            -webkit-transition: border 1000ms ease;
-            transition: border 1000ms ease;
-            }
-
-            input[type=range]::-moz-range-thumb {
-            -moz-appearance: none;
-            border: 2px solid;
-            border-radius: 50%;
-            height: 25px;
-            width: 25px;
-            max-width: 80px;
-            position: relative;
-            bottom: 11px;
-            background-color: #1d1c25;
-            cursor: -moz-grab;
-            -moz-transition: border 1000ms ease;
-            transition: border 1000ms ease;
-            }
-
-
-
-            .range.blue::-webkit-slider-thumb {
-            border-color: rgb(59,173,227);
-            }
-
-            .range.ltpurple::-webkit-slider-thumb {
-            border-color: rgb(87,111,230);
-            }
-
-            .range.purple::-webkit-slider-thumb {
-            border-color: rgb(152,68,183);
-            }
-
-            .range.pink::-webkit-slider-thumb {
-            border-color: rgb(255,53,127);
-            }
-
-            .range.blue::-moz-range-thumb {
-            border-color: rgb(59,173,227);
-            }
-
-            .range.ltpurple::-moz-range-thumb {
-            border-color: rgb(87,111,230);
-            }
-
-            .range.purple::-moz-range-thumb {
-            border-color: rgb(152,68,183);
-            }
-
-            .range.pink::-moz-range-thumb {
-            border-color: rgb(255,53,127);
-            }
-
-            input[type=range]::-webkit-slider-thumb:active {
-            cursor: -webkit-grabbing;
-            }
-
-            input[type=range]::-moz-range-thumb:active {
-            cursor: -moz-grabbing;
-            }
-        `}</style>
    </div>
    )
 };
